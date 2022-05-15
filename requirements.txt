@@ -1,0 +1,11 @@
+# Config
+hydra-core==1.1.2
+hydra-colorlog==1.1.0
+invoke
+-r application/emotions_api/requirements.txt
+-r application/stream_app/requirements.txt
+
+# ML
+scikit-learn==1.1.0
+kaggle==1.5.12
+albumentations==1.1.0

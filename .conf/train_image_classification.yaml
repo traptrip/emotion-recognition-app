@@ -1,0 +1,38 @@
+defaults:
+  - _self_
+  - logger: tensorboard
+  - model: resnet18
+  - metric: f1_score
+  - optimizer: adamw
+  - criterion: cross_entropy
+  - augmentations: light.yaml
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+general:
+  seed: 42
+  device: cpu
+  n_epochs: 10
+  batch_size: 32
+  n_workers: 4
+  image_width: 224
+  image_height: 224
+  project_dir: ${hydra:runtime.cwd}
+  checkpoint_path: weights
+  artifacts_dir: ${general.project_dir}/logs/cv_train_logs
+  run_name: ${now:%Y-%m-%d_%H-%M-%S}
+
+data: 
+  image_classification:
+    dataset_name: training.emotion_classification.image.data.fer2013.FER2013Dataset
+    datapath: ${general.project_dir}/data
+    train_path: ${datapath}/fer2013/train
+    valid_path: ${datapath}/fer2013/val
+
+
+hydra:
+  run:
+    dir: ${general.artifacts_dir}/${general.run_name}
+  sweep:
+    dir: ${general.artifacts_dir}/${general.run_name}
+    subdir: ${hydra.job.override_dirname}

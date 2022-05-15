@@ -1,0 +1,5 @@
+_target_: sklearn.metrics.f1_score
+params:
+  average: macro
+  sample_weight: null
+  zero_division: warn

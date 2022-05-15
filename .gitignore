@@ -1,0 +1,15 @@
+models/
+.vscode/
+__pycache__/
+
+*.png
+*.jpg
+*.jpeg
+*.csv
+*.tar.gz
+*.bib
+
+outputs/
+logs/
+application/
+detection/

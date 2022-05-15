@@ -1,0 +1,3 @@
+_target_: torch.utils.tensorboard.SummaryWriter
+params:
+  log_dir: ${general.project_dir}/logs/tb_logs/${general.run_name}
