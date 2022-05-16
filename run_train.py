@@ -3,7 +3,7 @@ import os
 import hydra
 from omegaconf import DictConfig
 
-from training.emotion_classification.image.train import (
+from training.train_pipeline import (
     train_pipeline as train_image_classification_pipeline,
 )
 

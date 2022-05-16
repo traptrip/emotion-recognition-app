@@ -1,6 +1,6 @@
 train:
   augs:
-    - class_name: albumentations.Flip
+    - class_name: albumentations.HorizontalFlip
       params:
         p: 0.5
     - class_name: albumentations.ShiftScaleRotate
@@ -20,13 +20,13 @@ train:
         p: 1.0
 valid:
   augs:
-  - class_name: albumentations.Resize
-    params:
-      height: ${general.image_height}
-      width: ${general.image_width}
-  - class_name: albumentations.Normalize
-    params:
+    - class_name: albumentations.Resize
+      params:
+        height: ${general.image_height}
+        width: ${general.image_width}
+    - class_name: albumentations.Normalize
+      params:
         p: 1.0
-  - class_name: albumentations.pytorch.transforms.ToTensorV2
-    params:
+    - class_name: albumentations.pytorch.transforms.ToTensorV2
+      params:
         p: 1.0

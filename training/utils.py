@@ -1,14 +1,17 @@
 import os
-import random
 import importlib
-from typing import Any
+import random
+from copy import deepcopy
+from typing import Tuple, Any
 
 import torch
-import albumentations as A
 import numpy as np
+import albumentations as A
+from torch.utils.data import DataLoader
 from omegaconf import DictConfig, ListConfig
 
 
+# Config Utils
 def set_seed(seed: int = 1234, precision: int = 10) -> None:
     np.random.seed(seed)
     random.seed(seed)
@@ -75,5 +78,68 @@ def load_augs(cfg: DictConfig) -> A.Compose:
     return A.Compose(augs)
 
 
-def mono_to_color(X: np.ndarray):
+# Data
+def get_dataloaders(cfg: DictConfig) -> Tuple[DataLoader, DataLoader]:
+    """
+    Function to get dataloader for data specified in config
+    """
+    train_dataset = load_obj(cfg.data.dataset_name)(
+        cfg.data.datapath,
+        "train",
+        transform=load_augs(cfg.augmentations.train.augs),
+        label2id=cfg.data.label2id,
+    )
+    valid_dataset = load_obj(cfg.data.dataset_name)(
+        cfg.data.datapath,
+        "val",
+        transform=load_augs(cfg.augmentations.valid.augs),
+        label2id=cfg.data.label2id,
+    )
+    return (
+        DataLoader(
+            train_dataset,
+            batch_size=cfg.general.batch_size,
+            shuffle=True,
+            num_workers=cfg.general.n_workers,
+            pin_memory=True,
+        ),
+        DataLoader(
+            valid_dataset,
+            batch_size=cfg.general.batch_size,
+            shuffle=False,
+            num_workers=cfg.general.n_workers,
+            pin_memory=True,
+        ),
+    )
+
+
+# Logging
+def initialize_logger(logger_cfg: DictConfig) -> Any:
+    """Func to initialize logger object"""
+    return load_obj(logger_cfg._target_)(**logger_cfg.params)
+
+
+def log_meta(logger: Any, train_meta: dict) -> None:
+    """
+    train_meta = {
+        "n_iter": int,
+        "train": {"loss": float, "metric": float},
+        "val": {"loss": float, "metric": float}
+    }
+    """
+    tm = deepcopy(train_meta)
+    n_iter = tm["n_iter"]
+    del tm["n_iter"]
+    for stage, val in tm.items():
+        for m, v in val.items():
+            logger.add_scalar(f"{m}/{stage}", v, n_iter)
+
+
+# Trainer
+def initialize_trainer(cfg: DictConfig, logger: Any):
+    """Func to initialize trainer object"""
+    return load_obj(cfg.trainer._target_)(cfg, logger)
+
+
+def mono_to_color(X: np.ndarray) -> np.ndarray:
     return np.stack([X, X, X], axis=-1)

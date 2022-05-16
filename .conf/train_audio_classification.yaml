@@ -5,7 +5,7 @@ defaults:
   - metric: f1_score
   - optimizer: adamw
   - criterion: cross_entropy
-  - augmentations: light.yaml
+  - augmentations: audio_light
   - trainer: vision_trainer
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
@@ -13,11 +13,9 @@ defaults:
 general:
   seed: 42
   device: cuda
-  n_epochs: 2
+  n_epochs: 20
   batch_size: 256
   n_workers: 4
-  image_width: 224
-  image_height: 224
   amp: true
   save_scripted_model: true
   project_dir: ${hydra:runtime.cwd}
@@ -26,8 +24,8 @@ general:
   run_name: ${now:%Y-%m-%d_%H-%M-%S}
 
 data:
-  dataset_name: training.data.emoface.EmoFace
-  datapath: ${general.project_dir}/data/ck_data
+  dataset_name: training.data.emospeech.EmoSpeech
+  datapath: ${general.project_dir}/data/emotions_audio
   label2id:
     angry: 0
     contempt: 1

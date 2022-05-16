@@ -5,4 +5,3 @@ params:
   eps: 0.00000001
   weight_decay: 0.01
   amsgrad: false
-  maximize: false

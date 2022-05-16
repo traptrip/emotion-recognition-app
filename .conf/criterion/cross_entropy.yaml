@@ -1,8 +1,16 @@
 _target_: torch.nn.CrossEntropyLoss
 params:
-  weight: null
   size_average: null
   ignore_index: -100
   reduce: null
   reduction: mean
   label_smoothing: 0.0
+  weight: null
+  #   - 0.8832
+  #   - 0.9985
+  #   - 0.9825
+  #   - 0.8841
+  #   - 0.7942
+  #   - 0.8614
+  #   - 0.8639
+  #   - 0.9049
