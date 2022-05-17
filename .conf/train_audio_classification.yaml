@@ -5,7 +5,8 @@ defaults:
   - metric: f1_score
   - optimizer: adamw
   - criterion: cross_entropy
-  - augmentations: audio_light
+  - augmentations: null
+  - datamodule: audio_classification
   - trainer: vision_trainer
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
@@ -22,19 +23,6 @@ general:
   checkpoint_path: weights
   artifacts_dir: ${general.project_dir}/logs/cv_train_logs
   run_name: ${now:%Y-%m-%d_%H-%M-%S}
-
-data:
-  dataset_name: training.data.emospeech.EmoSpeech
-  datapath: ${general.project_dir}/data/emotions_audio
-  label2id:
-    angry: 0
-    contempt: 1
-    disgust: 2
-    fear: 3
-    happy: 4
-    sad: 5
-    surprise: 6
-    neutral: 7
 
 hydra:
   run:

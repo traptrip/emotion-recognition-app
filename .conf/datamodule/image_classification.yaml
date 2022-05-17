@@ -1,0 +1,11 @@
+_target_: training.data.emoface.EmoFace
+root: ${general.project_dir}/data/ck_data
+label2id:
+  angry: 0
+  contempt: 1
+  disgust: 2
+  fear: 3
+  happy: 4
+  sad: 5
+  surprise: 6
+  neutral: 7

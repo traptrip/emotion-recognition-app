@@ -83,18 +83,8 @@ def get_dataloaders(cfg: DictConfig) -> Tuple[DataLoader, DataLoader]:
     """
     Function to get dataloader for data specified in config
     """
-    train_dataset = load_obj(cfg.data.dataset_name)(
-        cfg.data.datapath,
-        "train",
-        transform=load_augs(cfg.augmentations.train.augs),
-        label2id=cfg.data.label2id,
-    )
-    valid_dataset = load_obj(cfg.data.dataset_name)(
-        cfg.data.datapath,
-        "val",
-        transform=load_augs(cfg.augmentations.valid.augs),
-        label2id=cfg.data.label2id,
-    )
+    train_dataset = load_obj(cfg.datamodule._target_)(cfg, "train")
+    valid_dataset = load_obj(cfg.datamodule._target_)(cfg, "val")
     return (
         DataLoader(
             train_dataset,

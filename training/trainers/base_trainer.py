@@ -120,7 +120,7 @@ class Trainer:
                 val_score.append(score.item())
 
         val_loss = np.mean(val_loss)
-        val_score = np.mean(score)
+        val_score = np.mean(val_score)
 
         return val_loss, val_score
 
@@ -134,9 +134,9 @@ class Trainer:
 
         for epoch in range(1, self.cfg.general.n_epochs + 1):
             train_loss, train_score = self._train_epoch(train_dataloader, epoch)
-            logging.info(f"Train loss:{train_loss:.4f} Train score: {train_score:.4f}")
+            logging.info(f"Train loss: {train_loss:.4f} Train score: {train_score:.4f}")
             val_loss, val_score = self._val_epoch(valid_dataloader, epoch)
-            logging.info(f"Valid loss:{val_loss:.4f} Valid score: {val_score:.4f}")
+            logging.info(f"Valid loss: {val_loss:.4f} Valid score: {val_score:.4f}")
 
             # log best model
             if val_score > best_score:

@@ -7,13 +7,14 @@ defaults:
   - criterion: cross_entropy
   - augmentations: light.yaml
   - trainer: vision_trainer
+  - datamodule: image_classification
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
 general:
   seed: 42
   device: cuda
-  n_epochs: 2
+  n_epochs: 10
   batch_size: 256
   n_workers: 4
   image_width: 224
@@ -24,19 +25,6 @@ general:
   checkpoint_path: weights
   artifacts_dir: ${general.project_dir}/logs/cv_train_logs
   run_name: ${now:%Y-%m-%d_%H-%M-%S}
-
-data:
-  dataset_name: training.data.emoface.EmoFace
-  datapath: ${general.project_dir}/data/ck_data
-  label2id:
-    angry: 0
-    contempt: 1
-    disgust: 2
-    fear: 3
-    happy: 4
-    sad: 5
-    surprise: 6
-    neutral: 7
 
 hydra:
   run:

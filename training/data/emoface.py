@@ -1,37 +1,28 @@
 import pathlib
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Tuple
 
 import cv2
-from torchvision.datasets import VisionDataset
+from torch.utils.data import Dataset
 from omegaconf import DictConfig
 
+from training.utils import load_augs
 
-class EmoFace(VisionDataset):
+
+class EmoFace(Dataset):
     """FER2013 + CK+48
     <https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge>`
     <https://www.kaggle.com/datasets/shawon10/ckplus>
 
     Args:
-        root (string): Root directory of dataset where directory
-            ``root/fer2013`` exists.
-        split (string, optional): The dataset split, supports ``"train"`` (default), or ``"test"``.
-        transform (callable, optional): A function/transform that takes in an PIL image and returns a transformed
-            version. E.g, ``transforms.RandomCrop``
-        target_transform (callable, optional): A function/transform that takes in the target and transforms it.
+        cfg (DictConfig): Config.
+        stage (string): The dataset split, supports ``"train"`` (default), or ``"val"``.
     """
 
-    def __init__(
-        self,
-        root: str,
-        split: str = "train",
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
-        label2id: DictConfig = None,
-    ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
+    def __init__(self, cfg: DictConfig, stage: str = "train") -> None:
+        super().__init__()
 
-        base_folder = pathlib.Path(self.root)
-        data_folder = base_folder / split
+        data_folder = pathlib.Path(cfg.datamodule.root) / stage
+        label2id = cfg.datamodule.label2id if "label2id" in cfg.datamodule else None
         self._samples = [
             [
                 cv2.cvtColor(cv2.imread(str(img_p)), cv2.COLOR_BGR2RGB),
@@ -39,6 +30,11 @@ class EmoFace(VisionDataset):
             ]
             for img_p in data_folder.rglob("*.png")
         ]
+        self.transform = (
+            load_augs(cfg.augmentations.train.augs)
+            if stage == "train"
+            else load_augs(cfg.augmentations.valid.augs)
+        )
 
     def __len__(self) -> int:
         return len(self._samples)
@@ -48,9 +44,6 @@ class EmoFace(VisionDataset):
 
         if self.transform is not None:
             image = self.transform(image=image)["image"]
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
 
         return image, target
 

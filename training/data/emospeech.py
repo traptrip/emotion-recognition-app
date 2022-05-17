@@ -29,30 +29,24 @@ class EmoSpeech(Dataset):
     3. https://www.kaggle.com/datasets/ejlok1/surrey-audiovisual-expressed-emotion-savee
 
     Args:
-        root (string): Root directory of dataset where directory
-            ``root/fer2013`` exists.
-        split (string, optional): The dataset split, supports ``"train"`` (default), or ``"test"``.
-        transform (callable, optional): A function/transform that takes in an PIL image and returns a transformed
-            version. E.g, ``transforms.RandomCrop``
-        target_transform (callable, optional): A function/transform that takes in the target and transforms it.
+        cfg (DictConfig): Config.
+        stage (string): The dataset split, supports ``"train"`` (default), or ``"valid"``.
     """
 
-    def __init__(
-        self,
-        root: str,
-        split: str = "train",
-        noise_folder: str = "noise",
-        label2id: DictConfig = None,
-        audio_len: int = 5,  # seconds
-        mel_params: DictConfig = None,
-        amp2db_params: DictConfig = None,
-    ) -> None:
+    def __init__(self, cfg: DictConfig, stage: str = "train") -> None:
         super().__init__()
 
-        base_folder = pathlib.Path(root)
-        data_folder = base_folder / split
-        noise_folder = base_folder / noise_folder
-        self._noises_paths = list(noise_folder.rglob("*.wav"))
+        base_folder = pathlib.Path(cfg.datamodule.root)
+        data_folder = base_folder / stage
+        label2id = cfg.datamodule.label2id
+        mel_params = cfg.datamodule.mel_params
+        amp2db_params = cfg.datamodule.amp2db_params
+        self._ausio_len = cfg.datamodule.audio_len
+
+        if stage == "train":
+            noise_folder = base_folder / noise_folder
+            self._noises_paths = list(noise_folder.rglob("*.wav"))
+
         self._samples = [
             [
                 audio_path,
@@ -60,6 +54,7 @@ class EmoSpeech(Dataset):
             ]
             for audio_path in data_folder.rglob("*.wav")
         ]
+
         self._mel_creator = MelCreator(mel_params, amp2db_params)
         self._audio_len = audio_len
 

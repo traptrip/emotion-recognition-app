@@ -18,9 +18,9 @@ def train_pipeline(cfg: DictConfig) -> None:
     os.makedirs(cfg.general.checkpoint_path, exist_ok=True)
     set_seed(cfg.general.seed)
     logger = initialize_logger(cfg.logger)
-    train_loader, val_loader = get_dataloaders(cfg)
+    train_loader, valid_loader = get_dataloaders(cfg)
     trainer = initialize_trainer(cfg, logger)
-    trainer.train(train_loader, val_loader)
+    trainer.train(train_loader, valid_loader)
 
 
 @hydra.main(config_path=".conf", config_name="train_image_classification")

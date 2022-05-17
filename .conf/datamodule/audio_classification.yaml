@@ -1,0 +1,18 @@
+_target_: training.data.emospeech.EmoSpeech
+root: ${general.project_dir}/data/emotions_audio
+noise_folder: noise
+audio_len: 5
+
+label2id:
+  angry: 0
+  contempt: 1
+  disgust: 2
+  fear: 3
+  happy: 4
+  sad: 5
+  surprise: 6
+  neutral: 7
+
+mel_params:
+
+amp2db_params:
