@@ -78,6 +78,7 @@ class Trainer:
                     **self.cfg.metric.params,
                 )
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.5)
                 self._optimizer.step()
 
             train_loss.append(loss.item())

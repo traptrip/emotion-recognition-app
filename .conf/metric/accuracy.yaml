@@ -1,0 +1,4 @@
+_target_: sklearn.metrics.accuracy_score
+params:
+  normalize: True
+  sample_weight: null

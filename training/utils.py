@@ -2,7 +2,7 @@ import os
 import importlib
 import random
 from copy import deepcopy
-from typing import Tuple, Any
+from typing import Tuple, Any, Union
 
 import torch
 import numpy as np
@@ -131,5 +131,25 @@ def initialize_trainer(cfg: DictConfig, logger: Any):
     return load_obj(cfg.trainer._target_)(cfg, logger)
 
 
-def mono_to_color(X: np.ndarray) -> np.ndarray:
-    return np.stack([X, X, X], axis=-1)
+def mono_to_stereo(
+    x: Union[np.ndarray, torch.Tensor], axis=0
+) -> Union[np.ndarray, torch.Tensor]:
+    if x.shape[axis] == 1:
+        new_shape = list(x.shape)
+        new_shape[axis] = 3
+        if isinstance(x, np.ndarray):
+            return np.stack([x, x, x], axis=axis).reshape(new_shape)
+        elif isinstance(x, torch.Tensor):
+            return torch.stack([x, x, x], dim=axis).reshape(new_shape)
+    return x
+
+
+def stereo_to_mono(
+    x: Union[np.ndarray, torch.Tensor], axis=0
+) -> Union[np.ndarray, torch.Tensor]:
+    if x.shape[axis] > 1:
+        if isinstance(x, np.ndarray):
+            return np.mean(x, keepdims=True)
+        elif isinstance(x, torch.Tensor):
+            return torch.mean(x, dim=axis, keepdim=True)
+    return x

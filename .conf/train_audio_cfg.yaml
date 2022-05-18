@@ -6,19 +6,21 @@ defaults:
   - optimizer: adamw
   - criterion: cross_entropy
   - augmentations: null
-  - datamodule: audio_classification
   - trainer: vision_trainer
+  - datamodule: audio_classification
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
 general:
   seed: 42
   device: cuda
-  n_epochs: 20
+  n_epochs: 60
   batch_size: 256
   n_workers: 4
-  amp: true
-  save_scripted_model: true
+  audio_len: 64000 # 4 sec
+  sample_rate: 16000
+  amp: false
+  save_scripted_model: false
   project_dir: ${hydra:runtime.cwd}
   checkpoint_path: weights
   artifacts_dir: ${general.project_dir}/logs/cv_train_logs

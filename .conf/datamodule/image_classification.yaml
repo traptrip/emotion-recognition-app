@@ -1,4 +1,4 @@
-_target_: training.data.emoface.EmoFace
+_target_: training.datamodule.emoface.EmoFace
 root: ${general.project_dir}/data/ck_data
 label2id:
   angry: 0

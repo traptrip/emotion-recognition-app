@@ -1,18 +1,38 @@
-_target_: training.data.emospeech.EmoSpeech
-root: ${general.project_dir}/data/emotions_audio
-noise_folder: noise
-audio_len: 5
+_target_: training.datamodule.emospeech.EmoSpeech
+root: ${general.project_dir}/data/emotions_audio_full
+
+noise:
+  dir: noise
+  params:
+    min_amp: 0
+    max_amp: 3
 
 label2id:
   angry: 0
-  contempt: 1
-  disgust: 2
-  fear: 3
-  happy: 4
-  sad: 5
-  surprise: 6
-  neutral: 7
+  disgust: 1
+  fear: 2
+  happy: 3
+  sad: 4
+  surprise: 5
+  neutral: 6
 
 mel_params:
+  sample_rate: ${general.sample_rate}
+  n_fft: 1024
+  win_length: 1024
+  hop_length: 128
+  f_min: 0
+  f_max: null
+  pad: 0
+  n_mels: 128
+  power: 2.0
+  normalized: True
+  center: False
+  pad_mode: reflect
+  onesided: True
+  norm: slaney
+  mel_scale: htk
 
 amp2db_params:
+  stype: power
+  top_db: 100
