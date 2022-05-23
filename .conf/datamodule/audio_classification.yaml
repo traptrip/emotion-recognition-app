@@ -5,7 +5,7 @@ noise:
   dir: noise
   params:
     min_amp: 0
-    max_amp: 3
+    max_amp: 4
 
 label2id:
   angry: 0

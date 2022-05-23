@@ -2,7 +2,6 @@ import pathlib
 from typing import Any, Tuple
 
 import torch
-import librosa
 import torchaudio
 import numpy as np
 import torch.nn.functional as F
@@ -70,7 +69,6 @@ class EmoSpeech(Dataset):
     def __getitem__(self, idx: int) -> Tuple[Any, Any]:
         # read audio
         audio_path, target = self._samples[idx]
-        # audio, _ = torchaudio.load(audio_path)
         audio, _ = torchaudio.sox_effects.apply_effects_file(
             audio_path,
             effects=[
@@ -78,10 +76,6 @@ class EmoSpeech(Dataset):
                 ["rate", f"{self.sample_rate}"],
             ],
         )
-        # audio, sr = librosa.load(audio_path)
-        # audio = torch.from_numpy(
-        #     librosa.effects.pitch_shift(audio, sr, np.random.choice([-1, 0, 1]))
-        # )
 
         # (n,wav_len) -> (1, wav_len) -> (3, wav_len)
         audio = stereo_to_mono(audio, axis=0)

@@ -19,7 +19,7 @@ general:
   n_workers: 4
   audio_len: 64000 # 4 sec
   sample_rate: 16000
-  amp: false
+  amp: true
   save_scripted_model: false
   project_dir: ${hydra:runtime.cwd}
   checkpoint_path: weights

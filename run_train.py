@@ -1,10 +1,10 @@
+import os
 import hydra
 from omegaconf import DictConfig
-
 from training.train_pipeline import train_pipeline
 
-# CFG_NAME = "train_cv_cfg"
-CFG_NAME = "train_audio_cfg"
+# CFG_NAME = "train_audio_cfg"
+CFG_NAME = os.environ.get("CFG_NAME", default="train_cv_cfg")
 
 
 @hydra.main(config_path=".conf", config_name=CFG_NAME)
