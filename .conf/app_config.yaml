@@ -1,0 +1,64 @@
+defaults:
+  - _self_
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+general:
+  device: cuda
+  clip_size: 4 # sec
+  sample_rate: 16000
+  project_dir: ${hydra:runtime.cwd}
+
+recognition:
+  sub_duration: 1000
+  image_classifier:
+    weights: ${general.project_dir}/application/models/emotion_image_classifier/model.torchscript.pt
+    # weights: ${general.project_dir}/application/models/emotion_image_classifier/last.torchscript.pt
+    image_size: [224, 224]
+    device: ${general.device}
+
+  audio_classifier:
+    weights: ${general.project_dir}/application/models/emotion_audio_classifier/model.torchscript.pt
+    device: ${general.device}
+    mel_params:
+      sample_rate: ${general.sample_rate}
+      n_fft: 1024
+      win_length: 1024
+      hop_length: 128
+      f_min: 0
+      f_max: null
+      pad: 0
+      n_mels: 128
+      power: 2.0
+      normalized: True
+      center: False
+      pad_mode: reflect
+      onesided: True
+      norm: slaney
+      mel_scale: htk
+    amp2db_params:
+      stype: power
+      top_db: 100
+    audio_size: 64000 # 4 sec
+
+  face_detector:
+    model_config_path: ${general.project_dir}/application/src/face_search/retina_torch/config.json
+
+  id2label:
+    0: angry
+    1: disgust
+    2: fear
+    3: happy
+    4: sad
+    5: surprise
+    6: neutral
+
+visualization:
+  label2color:
+    angry: "tab:red"
+    disgust: "tab:green"
+    fear: "tab:pink"
+    happy: "tab:orange"
+    sad: "tab:blue"
+    surprise: "tab:brown"
+    neutral: "tab:cyan"

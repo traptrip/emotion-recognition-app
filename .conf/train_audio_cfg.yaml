@@ -20,7 +20,7 @@ general:
   audio_len: 64000 # 4 sec
   sample_rate: 16000
   amp: true
-  save_scripted_model: false
+  save_scripted_model: true
   project_dir: ${hydra:runtime.cwd}
   checkpoint_path: weights
   artifacts_dir: ${general.project_dir}/logs/cv_train_logs

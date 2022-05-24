@@ -30,7 +30,7 @@ class Trainer:
     def _initialize_model(self) -> Any:
         raise NotImplementedError()
 
-    def _save_model(self, model: Any, name: str) -> None:
+    def _save_model(self, model: Any, name: str, data_loader: DataLoader) -> None:
         torch.save(
             model.state_dict(),
             os.path.join(self.cfg.general.checkpoint_path, name + ".pt"),
@@ -38,9 +38,7 @@ class Trainer:
         if self.cfg.general.save_scripted_model:
             model_scripted = torch.jit.trace(
                 model,
-                torch.Tensor(
-                    1, 3, self.cfg.general.image_width, self.cfg.general.image_height
-                ).to(self.cfg.general.device),
+                data_loader.dataset[0][0].unsqueeze(0).to(self.cfg.general.device),
             )
             model_scripted.save(
                 os.path.join(self.cfg.general.checkpoint_path, name + ".torchscript.pt")
@@ -143,7 +141,7 @@ class Trainer:
             if val_score > best_score:
                 best_model = deepcopy(self._model)
                 best_score = val_score
-                self._save_model(best_model, "best")
+                self._save_model(best_model, "best", valid_dataloader)
 
             train_meta = {
                 "n_iter": epoch,
@@ -152,7 +150,7 @@ class Trainer:
             }
             log_meta(self._logger, train_meta)
 
-        self._save_model(self._model, "last")
+        self._save_model(self._model, "last", valid_dataloader)
         logging.info(
             "Model saved to "
             f"{os.path.join(self.cfg.general.artifacts_dir, self.cfg.general.run_name, self.cfg.general.checkpoint_path)}"
