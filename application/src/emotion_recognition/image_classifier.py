@@ -4,7 +4,8 @@ import torch
 import cv2
 import numpy as np
 import torch.nn.functional as F
-from torchvision import transforms as T
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensorV2
 from omegaconf import DictConfig
 
 from application.src.utils import mono_to_stereo
@@ -14,8 +15,8 @@ class ImageClassifier:
     def __init__(self, cfg: DictConfig) -> None:
         self.cfg = cfg
         self._img_size = cfg.image_size
-        self._transform = T.Compose(
-            [T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+        self._transform = A.Compose(
+            [A.Resize(*cfg.image_size), A.Normalize(), ToTensorV2()]
         )
         self._model = torch.jit.load(cfg.weights, map_location=torch.device(cfg.device))
         self._model.eval()
@@ -23,14 +24,10 @@ class ImageClassifier:
     def _prepare(self, faces: List[np.ndarray]) -> torch.Tensor:
         faces = [
             self._transform(
-                mono_to_stereo(
-                    cv2.cvtColor(
-                        cv2.resize(face, self.cfg.image_size),
-                        cv2.COLOR_RGB2GRAY,
-                    )[..., None],
-                    -1,
+                image=mono_to_stereo(
+                    cv2.cvtColor(face, cv2.COLOR_RGB2GRAY)[..., None], -1
                 )
-            )
+            )["image"]
             for face in faces
         ]
         return torch.stack(faces).to(self.cfg.device)

@@ -1,5 +1,5 @@
 _target_: training.datamodule.emoface.EmoFace
-root: ${general.project_dir}/data/ck_data
+root: ${general.project_dir}/data/emotions_cv
 label2id:
   angry: 0
   disgust: 1

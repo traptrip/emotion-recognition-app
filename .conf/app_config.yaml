@@ -12,13 +12,12 @@ general:
 recognition:
   sub_duration: 1000
   image_classifier:
-    weights: ${general.project_dir}/application/models/emotion_image_classifier/model.torchscript.pt
-    # weights: ${general.project_dir}/application/models/emotion_image_classifier/last.torchscript.pt
-    image_size: [224, 224]
+    weights: ${general.project_dir}/application/models/emotion_image_classifier/best.torchscript.pt
+    image_size: [64, 64]
     device: ${general.device}
 
   audio_classifier:
-    weights: ${general.project_dir}/application/models/emotion_audio_classifier/model.torchscript.pt
+    weights: ${general.project_dir}/application/models/emotion_audio_classifier/best.torchscript.pt
     device: ${general.device}
     mel_params:
       sample_rate: ${general.sample_rate}

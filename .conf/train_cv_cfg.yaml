@@ -5,7 +5,7 @@ defaults:
   - metric: f1_score
   - optimizer: adamw
   - criterion: cross_entropy
-  - augmentations: light.yaml
+  - augmentations: medium
   - trainer: vision_trainer
   - datamodule: image_classification
   - override hydra/hydra_logging: colorlog
@@ -14,11 +14,11 @@ defaults:
 general:
   seed: 42
   device: cuda
-  n_epochs: 50
-  batch_size: 256
+  n_epochs: 100
+  batch_size: 4096
   n_workers: 4
-  image_width: 224
-  image_height: 224
+  image_width: 64
+  image_height: 64
   amp: true
   save_scripted_model: true
   project_dir: ${hydra:runtime.cwd}

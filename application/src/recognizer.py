@@ -84,7 +84,7 @@ class EmotionRecognizer:
     def _render_video(self, video_clip: VideoFileClip, recognition_result: List[dict]):
         full_probas = [
             {
-                emotion: cv_proba  # (cv_proba + audio_proba) / 2
+                emotion: (2 * cv_proba + audio_proba) / 3
                 for (emotion, cv_proba), (emotion, audio_proba) in zip(
                     rec["cv"][0].items(), rec["audio"][0].items()
                 )

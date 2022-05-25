@@ -1,5 +1,5 @@
 _target_: training.datamodule.emospeech.EmoSpeech
-root: ${general.project_dir}/data/emotions_audio_full
+root: ${general.project_dir}/data/emotions_audio
 
 noise:
   dir: noise

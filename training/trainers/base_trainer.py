@@ -23,7 +23,16 @@ class Trainer:
         self._optimizer = load_obj(cfg.optimizer._target_)(
             self._model.parameters(), **cfg.optimizer.params
         )
-        self._criterion = load_obj(cfg.criterion._target_)(**cfg.criterion.params)
+        if cfg.criterion.params.weight:
+            weight = torch.as_tensor(
+                cfg.criterion.params.weight, device=cfg.general.device
+            )
+        else:
+            weight = None
+        del cfg.criterion.params.weight
+        self._criterion = load_obj(cfg.criterion._target_)(
+            weight=weight, **cfg.criterion.params
+        )
         self._metric = load_obj(cfg.metric._target_)
         self._scaler = GradScaler()
 
