@@ -1,7 +1,6 @@
 # Config
 hydra-core==1.1.2
 hydra-colorlog==1.1.0
-invoke==1.7.1
 
 # ML
 kaggle==1.5.12
@@ -11,18 +10,11 @@ albumentations==1.1.0
 torch==1.11.0
 torchvision==0.12.0
 torchaudio==0.11.0
-librosa==0.9.1
-transformers==4.19.1
 
 # Utils
 tqdm==4.64.0
 numpy==1.22.3
 pandas==1.4.2
-imagezmq==1.1.1
 opencv-python==4.5.5.64
 tensorboard==2.9.0
 moviepy==1.0.3
-
-# Web
-dash==2.4.1
-dash_bootstrap_components==1.1.0
