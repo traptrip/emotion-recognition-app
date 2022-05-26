@@ -134,12 +134,12 @@ def read_user(
 async def create_task_for_user(
     file: UploadFile = File(),
     db: Session = Depends(get_db),
-    # current_user: models.User = Depends(_get_current_active_user),
+    current_user: models.User = Depends(_get_current_active_user),
 ):
     video_name = file.filename
     video_bytes = await file.read()
     return crud.create_user_task(
-        db=db, video_name=video_name, video_bytes=video_bytes, user_id=1
+        db=db, video_name=video_name, video_bytes=video_bytes, user_id=current_user.id
     )
 
 
