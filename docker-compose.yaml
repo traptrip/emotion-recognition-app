@@ -12,9 +12,9 @@ services:
     volumes:
       - ./application/transport:/usr/src/app/transport
       - ./application/models:/usr/src/app/models
-      - ./application/media:/usr/src/app/media
       - ./application/db:/usr/src/app/db
       - ./.conf/app_config.yaml:/usr/src/app/.conf/app_config.yaml
+      - ./media:/usr/src/app/media
     environment:
       - ML_CONFIG_PATH=.conf/app_config.yaml
       - SQLALCHEMY_DATABASE_URL=sqlite:///db/emotion_app.db
@@ -32,10 +32,10 @@ services:
     volumes:
       - ./application/transport:/usr/src/app/transport
       - ./application/models:/usr/src/app/models
-      - ./application/media:/usr/src/app/media
       - ./application/db:/usr/src/app/db
       - ./.conf/app_config.yaml:/usr/src/app/.conf/app_config.yaml
-      - ./application/logs:/usr/src/app/logs
+      - ./logs/app_logs:/usr/src/app/logs
+      - ./media:/usr/src/app/media
     environment:
       - ML_CONFIG_PATH=.conf/app_config.yaml
       - CELERY_BROKER_URL=redis://redis:6379/0
