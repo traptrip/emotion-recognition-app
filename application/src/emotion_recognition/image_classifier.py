@@ -8,7 +8,7 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from omegaconf import DictConfig
 
-from application.src.utils import mono_to_stereo
+from ..utils import mono_to_stereo
 
 
 class ImageClassifier:

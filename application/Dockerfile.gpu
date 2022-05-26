@@ -1,0 +1,17 @@
+# pull official base image
+FROM pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
+
+# set work directory
+WORKDIR /usr/src/app
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# install dependencies
+COPY ./requirements.txt .
+RUN pip install --upgrade pip && apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
+RUN pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu113
+
+# copy project
+COPY . .

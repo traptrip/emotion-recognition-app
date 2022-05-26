@@ -1,12 +1,11 @@
 import torch
-import torchaudio
 import numpy as np
 import torch.nn.functional as F
 import torchaudio.transforms as T
 from omegaconf import DictConfig
 from moviepy.editor import AudioClip
 
-from application.src.utils import mono_to_stereo, stereo_to_mono, MelCreator
+from ..utils import mono_to_stereo, stereo_to_mono, MelCreator
 
 
 class AudioClassifier:

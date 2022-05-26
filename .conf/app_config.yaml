@@ -1,26 +1,20 @@
-defaults:
-  - _self_
-  - override hydra/hydra_logging: colorlog
-  - override hydra/job_logging: colorlog
-
 general:
   device: cuda
   clip_size: 4 # sec
   sample_rate: 16000
-  project_dir: ${hydra:runtime.cwd}
 
 recognition:
   sub_duration: 1000
   image_classifier:
-    weights: ${general.project_dir}/application/models/emotion_image_classifier/best.torchscript.pt
+    weights: ./models/emotion_image_classifier/best.torchscript.pt
     image_size: [64, 64]
-    device: ${general.device}
+    device: cuda
 
   audio_classifier:
-    weights: ${general.project_dir}/application/models/emotion_audio_classifier/best.torchscript.pt
-    device: ${general.device}
+    weights: ./models/emotion_audio_classifier/best.torchscript.pt
+    device: cuda
     mel_params:
-      sample_rate: ${general.sample_rate}
+      sample_rate: 16000
       n_fft: 1024
       win_length: 1024
       hop_length: 128
@@ -41,7 +35,7 @@ recognition:
     audio_size: 64000 # 4 sec
 
   face_detector:
-    model_config_path: ${general.project_dir}/application/src/face_search/retina_torch/config.json
+    model_config_path: ./src/face_search/retina_torch/config.json
 
   id2label:
     0: angry

@@ -13,6 +13,7 @@ __pycache__/
 *.zip
 *.mp4
 *.mp3
+*.db
 .DS_Store
 
 outputs/

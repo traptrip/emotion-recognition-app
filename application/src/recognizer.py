@@ -4,16 +4,18 @@ from typing import List
 
 import cv2
 import torch
+import pandas as pd
 import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 from moviepy.editor import VideoClip, VideoFileClip
 from moviepy.video.io.bindings import mplfig_to_npimage
 
-from application.src.face_search.retina_torch.retina_api import RetinaDetector
-from application.src.emotion_recognition.image_classifier import ImageClassifier
-from application.src.emotion_recognition.audio_classifier import AudioClassifier
-from application.src.utils import time_manager
+from .face_search.retina_torch.retina_api import RetinaDetector
+from .emotion_recognition.image_classifier import ImageClassifier
+from .emotion_recognition.audio_classifier import AudioClassifier
+from .utils import time_manager
 
+torch.multiprocessing.set_start_method("spawn", force=True)
 CURRENT_DIR = Path(__file__).parent
 
 
@@ -35,8 +37,19 @@ class EmotionRecognizer:
         self.eps = 0.4
 
     def recognize(self, video_path: str):
+        video_path = Path(video_path)
+        save_path_video = str(
+            video_path.parent
+            / video_path.name.replace(video_path.suffix, f"_result{video_path.suffix}")
+        )
+        save_path_df = str(
+            video_path.parent
+            / video_path.name.replace(video_path.suffix, f"_result.csv")
+        )
         recognition_result = []
-        video_clip = VideoFileClip(video_path, audio_fps=self.cfg.general.sample_rate)
+        video_clip = VideoFileClip(
+            str(video_path), audio_fps=self.cfg.general.sample_rate
+        )
         video_size = video_clip.duration
 
         # Recognition
@@ -51,7 +64,12 @@ class EmotionRecognizer:
 
         # Render & Save Clip
         with time_manager("Rendering"):
-            self._render_video(video_clip, recognition_result)
+            self._render_video(video_clip, recognition_result, save_path_video)
+
+        df = self._generate_df(recognition_result)
+        df.to_csv(save_path_df, index=False)
+
+        return save_path_video, save_path_df
 
     def _recognize_clip(self, clip: VideoClip):
         clip_res = []
@@ -81,7 +99,9 @@ class EmotionRecognizer:
             for proba in probas
         ]
 
-    def _render_video(self, video_clip: VideoFileClip, recognition_result: List[dict]):
+    def _render_video(
+        self, video_clip: VideoFileClip, recognition_result: List[dict], save_path: str
+    ):
         full_probas = [
             {
                 emotion: (2 * cv_proba + audio_proba) / 3
@@ -128,11 +148,13 @@ class EmotionRecognizer:
         )
         rendered_video = rendered_video.set_audio(video_clip.audio)
         rendered_video.write_videofile(
-            "result.mp4",
+            save_path,
             video_clip.fps,
             audio_fps=self.cfg.general.sample_rate,
             audio_nbytes=2,
             threads=4,
+            verbose=False,
+            logger=None,
         )
         video_clip.close()
         rendered_video.close()
@@ -167,3 +189,11 @@ class EmotionRecognizer:
 
     def _generate_zero_prediction(self):
         return [{emotion: 0 for emotion in self._id2label.values()}]
+
+    def _generate_df(self, recognition_result: List[dict]) -> pd.DataFrame:
+        result = []
+        for r in recognition_result:
+            cv_probas = {f"cv_{emotion}": p for emotion, p in r["cv"]}
+            audio_probas = {f"audio_{emotion}": p for emotion, p in r["audio"]}
+            result.append({"coords": r["coords"], **cv_probas, **audio_probas})
+        return pd.DataFrame(result)
