@@ -192,8 +192,9 @@ class EmotionRecognizer:
 
     def _generate_df(self, recognition_result: List[dict]) -> pd.DataFrame:
         result = []
-        for r in recognition_result:
-            cv_probas = {f"cv_{emotion}": p for emotion, p in r["cv"]}
-            audio_probas = {f"audio_{emotion}": p for emotion, p in r["audio"]}
-            result.append({"coords": r["coords"], **cv_probas, **audio_probas})
+        for i, r in enumerate(recognition_result):
+            cv_probas = {f"cv_{emotion}": p for emotion, p in r["cv"][0].items()}
+            audio_probas = {f"audio_{emotion}": p for emotion, p in r["audio"][0].items()}
+            result.append({"frame": i, "coords": r["coords"][0], **cv_probas, **audio_probas})
         return pd.DataFrame(result)
+ 

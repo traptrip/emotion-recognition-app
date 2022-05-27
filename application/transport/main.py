@@ -1,7 +1,9 @@
+import os
 from datetime import datetime, timedelta
 from typing import List
 
 from fastapi import Depends, File, FastAPI, HTTPException, status, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
@@ -91,6 +93,7 @@ async def login_for_access_token(
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Register a new user"""
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="This username already registered")
@@ -104,6 +107,7 @@ def read_users(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Get metadata for all users"""
     if current_user:
         users = crud.get_users(db, skip=skip, limit=limit)
         return users
@@ -119,6 +123,7 @@ def read_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Get current user metadata"""
     db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -136,6 +141,7 @@ async def create_task_for_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Post new task for current user"""
     video_name = file.filename
     video_bytes = await file.read()
     return crud.create_user_task(
@@ -150,6 +156,7 @@ def read_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Get all tasks for current user"""
     tasks = crud.get_user_tasks(db, current_user.id, skip=skip, limit=limit)
     return tasks
 
@@ -160,8 +167,40 @@ def read_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Get task metadata"""
+
     task = crud.get_user_task(db, current_user.id, task_id)
     return task
+
+
+@app.get("/tasks/{task_id}/video")
+def read_task(
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(_get_current_active_user),
+):
+    """Get Task video results"""
+
+    task = crud.get_user_task(db, current_user.id, task_id)
+    video_path = task.result_video_url
+    if os.path.exists(video_path):
+        return FileResponse(video_path)
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found!")
+
+
+@app.get("/tasks/{task_id}/meta")
+def read_task(
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(_get_current_active_user),
+):
+    """Get Task table results"""
+
+    task = crud.get_user_task(db, current_user.id, task_id)
+    table_path = task.result_table_url
+    if os.path.exists(table_path):
+        return FileResponse(table_path)
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found!")
 
 
 @app.delete("/tasks/")
@@ -172,6 +211,7 @@ def delete_task_for_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(_get_current_active_user),
 ):
+    """Delete task"""
     result = crud.delete_user_task(db, current_user.id, task_id, skip=skip, limit=limit)
     if result["status"] == "OK":
         return status.HTTP_202_ACCEPTED

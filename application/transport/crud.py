@@ -89,7 +89,7 @@ def create_user_task(db: Session, video_name: str, video_bytes: bytes, user_id: 
     with open(video_path, "wb") as fout:
         fout.write(video_bytes)
 
-    celery_task = worker.create_task.delay(video_path)
+    celery_task = worker.create_task.s().delay(video_path)
 
     db_task = models.Task(
         id=celery_task.id,
@@ -106,6 +106,8 @@ def create_user_task(db: Session, video_name: str, video_bytes: bytes, user_id: 
 def delete_user_task(db: Session, user_id: int, task_id: int):
     task = db.get(models.Task, task_id)
     if task.owner_id == user_id:
+        os.remove(task.result_video_url)
+        os.remove(task.result_table_url)
         db.delete(task)
         db.commit()
         return {"status": "OK"}
