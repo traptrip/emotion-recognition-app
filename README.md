@@ -17,4 +17,6 @@ Python 3.9.12
 python run_train.py
 ```
 
-# Run application
+# Run application (need to have cuda & nvidia-docker available)
+1) `bash docker-compose up -d --build`
+2) Go to http://localhost:8004/
