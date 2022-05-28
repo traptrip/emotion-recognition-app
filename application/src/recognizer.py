@@ -195,6 +195,6 @@ class EmotionRecognizer:
         for i, r in enumerate(recognition_result):
             cv_probas = {f"cv_{emotion}": p for emotion, p in r["cv"][0].items()}
             audio_probas = {f"audio_{emotion}": p for emotion, p in r["audio"][0].items()}
-            result.append({"frame": i, "coords": r["coords"][0], **cv_probas, **audio_probas})
+            result.append({"frame": i, "coords": r["coords"][0] if r["coords"] else [], **cv_probas, **audio_probas})
         return pd.DataFrame(result)
  

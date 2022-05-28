@@ -11,6 +11,8 @@ services:
     command: uvicorn transport.main:app --host 0.0.0.0 --reload
     volumes:
       - ./application/transport:/usr/src/app/transport
+      - ./application/templates:/usr/src/app/templates
+      - ./application/static:/usr/src/app/static
       - ./application/models:/usr/src/app/models
       - ./application/db:/usr/src/app/db
       - ./.conf/app_config.yaml:/usr/src/app/.conf/app_config.yaml

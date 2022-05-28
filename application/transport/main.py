@@ -1,12 +1,26 @@
 import os
-from datetime import datetime, timedelta
+import logging
+from datetime import timedelta
 from typing import List
 
-from fastapi import Depends, File, FastAPI, HTTPException, status, UploadFile
-from fastapi.responses import FileResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import (
+    Depends,
+    File,
+    FastAPI,
+    HTTPException,
+    status,
+    UploadFile,
+    Request,
+    Form,
+)
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_login import LoginManager
+from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -18,9 +32,13 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 365
 
 models.Base.metadata.create_all(bind=engine)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+manager = LoginManager(SECRET_KEY, token_url="/token", use_cookie=True)
+manager.cookie_name = "token-cookie"
 
 
 # Dependency
@@ -33,71 +51,44 @@ def get_db():
 
 
 # AUTH UTILS
-def _create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-async def _get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = crud.get_user_by_username(db, username)
-    if user is None:
-        raise credentials_exception
+@manager.user_loader
+def load_user(username: str):
+    with SessionLocal() as db:
+        user = crud.get_user_by_username(db, username)
     return user
 
 
-async def _get_current_active_user(
-    current_user: models.User = Depends(_get_current_user),
-):
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-@app.post("/token", response_model=schemas.Token)
-async def login_for_access_token(
+@app.post("/token")
+def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
+    username = form_data.username
+    password = form_data.password
+    user = crud.authenticate_user(db, username, password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise InvalidCredentialsException
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
-    access_token = _create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    access_token = manager.create_access_token(
+        data={"sub": username}, expires=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    resp = RedirectResponse(url="/main", status_code=status.HTTP_302_FOUND)
+    manager.set_cookie(resp, access_token)
+    return resp
 
 
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+# User routes
+@app.post("/users/add")
+def create_user(
+    username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)
+):
     """Register a new user"""
-    db_user = crud.get_user_by_username(db, username=user.username)
+
+    db_user = crud.get_user_by_username(db, username=username)
     if db_user:
         raise HTTPException(status_code=400, detail="This username already registered")
-    return crud.create_user(db=db, user=user)
+    user = schemas.UserCreate(username=username, password=password)
+    crud.create_user(db=db, user=user)
+    return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/users/", response_model=List[schemas.User])
@@ -105,9 +96,10 @@ def read_users(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get metadata for all users"""
+
     if current_user:
         users = crud.get_users(db, skip=skip, limit=limit)
         return users
@@ -117,36 +109,34 @@ def read_users(
     )
 
 
-@app.get("/users/{user_id}", response_model=schemas.User)
+@app.get("/users/me", response_model=schemas.User)
 def read_user(
-    user_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get current user metadata"""
-    db_user = crud.get_user(db, user_id=user_id)
+
+    db_user = crud.get_user(db, user_id=current_user.id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    if db_user.id == current_user.id:
-        return db_user
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Forbidden!",
-    )
+    return db_user
 
 
-@app.post("/tasks/", response_model=schemas.Task)
+@app.post("/tasks/add")
 async def create_task_for_user(
     file: UploadFile = File(),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Post new task for current user"""
+
     video_name = file.filename
     video_bytes = await file.read()
-    return crud.create_user_task(
+    crud.create_user_task(
         db=db, video_name=video_name, video_bytes=video_bytes, user_id=current_user.id
     )
+
+    return RedirectResponse(url="/main", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/tasks/", response_model=List[schemas.Task])
@@ -154,9 +144,10 @@ def read_tasks(
     skip: int = 0,
     limit: int = 1000,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get all tasks for current user"""
+
     tasks = crud.get_user_tasks(db, current_user.id, skip=skip, limit=limit)
     return tasks
 
@@ -165,7 +156,7 @@ def read_tasks(
 def read_task(
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get task metadata"""
 
@@ -177,7 +168,7 @@ def read_task(
 def read_task(
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get Task video results"""
 
@@ -192,7 +183,7 @@ def read_task(
 def read_task(
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Get Task table results"""
 
@@ -203,16 +194,48 @@ def read_task(
     raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found!")
 
 
-@app.delete("/tasks/")
+@app.delete("/tasks/{task_id}")
 def delete_task_for_user(
-    task_id: int,
-    skip: int = 0,
-    limit: int = 1000,
+    task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(_get_current_active_user),
+    current_user=Depends(manager),
 ):
     """Delete task"""
-    result = crud.delete_user_task(db, current_user.id, task_id, skip=skip, limit=limit)
+
+    result = crud.delete_user_task(db, current_user.id, task_id)
     if result["status"] == "OK":
         return status.HTTP_202_ACCEPTED
     return HTTPException(status_code=404, detail="Task not found")
+
+
+# Web pages routes
+@app.get("/login")
+async def login(request: Request):
+    """Login"""
+
+    return templates.TemplateResponse("login2.html", context={"request": request})
+
+
+@app.get("/logout")
+async def logout():
+    """Logout from current session"""
+
+    response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    # response.delete_cookie(key="access_token")\
+    manager.set_cookie(response, "")
+    return response
+
+
+@app.get("/")
+async def index():
+    """Startup html page"""
+    return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+
+@app.get("/main")
+async def main_page(request: Request, current_user=Depends(manager)):
+    """Main html page"""
+
+    return templates.TemplateResponse(
+        "index.html", context={"request": request, "user": current_user}
+    )

@@ -1,5 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel
+from fastapi import Form
 
 # TASK
 class TaskBase(BaseModel):
@@ -20,11 +21,11 @@ class Task(TaskBase):
 
 # USER
 class UserBase(BaseModel):
-    username: str
+    username: str = Form()
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Form()
 
 
 class User(UserBase):

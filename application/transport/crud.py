@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from celery.result import AsyncResult
+from celery.contrib.abortable import AbortableAsyncResult
 
 from . import models, schemas, worker
 from .settings import *
@@ -49,7 +49,7 @@ def authenticate_user(db: Session, username: str, password: str):
 
 
 # TASK
-def _update_task(db: Session, db_task: models.Task, celery_task: AsyncResult):
+def _update_task(db: Session, db_task: models.Task, celery_task: AbortableAsyncResult):
     db_task.status = celery_task.state
     if celery_task.state == "SUCCESS":
         db_task.result_video_url = celery_task.result[0]
@@ -59,24 +59,25 @@ def _update_task(db: Session, db_task: models.Task, celery_task: AsyncResult):
 
 
 def get_user_task(db: Session, user_id: int, task_id: str):
-    celery_task = AsyncResult(task_id)
+    celery_task = AbortableAsyncResult(task_id)
     db_task = db.get(models.Task, task_id)
-    if db_task.owner_id == user_id:
-        db_task = _update_task(db, db_task, celery_task)
-        return db_task
+    if db_task:
+        if db_task.owner_id == user_id:
+            db_task = _update_task(db, db_task, celery_task)
+            return db_task
     return None
 
 
 def get_user_tasks(db: Session, user_id: int, skip: int = 0, limit: int = 1000):
     db_tasks = (
         db.query(models.Task)
-        .filter(models.User.id == user_id)
+        .filter(models.Task.owner_id == user_id)
         .offset(skip)
         .limit(limit)
         .all()
     )
     for db_task in db_tasks:
-        celery_task = AsyncResult(db_task.id)
+        celery_task = AbortableAsyncResult(db_task.id)
         _update_task(db, db_task, celery_task)
     return db_tasks
 
@@ -106,8 +107,14 @@ def create_user_task(db: Session, video_name: str, video_bytes: bytes, user_id: 
 def delete_user_task(db: Session, user_id: int, task_id: int):
     task = db.get(models.Task, task_id)
     if task.owner_id == user_id:
-        os.remove(task.result_video_url)
-        os.remove(task.result_table_url)
+        celery_task = AbortableAsyncResult(task_id)
+        while not celery_task.is_aborted():
+            celery_task.abort()
+
+        if task.result_video_url:
+            os.remove(task.result_video_url)
+        if task.result_table_url:
+            os.remove(task.result_table_url)
         db.delete(task)
         db.commit()
         return {"status": "OK"}

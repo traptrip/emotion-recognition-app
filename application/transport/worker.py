@@ -2,6 +2,7 @@ import os
 
 from celery import Celery
 from celery.states import STARTED
+from celery.contrib.abortable import AbortableTask
 
 from src.recognizer import EmotionRecognizer
 from .settings import CONFIG
@@ -15,7 +16,7 @@ celery.conf.result_backend = os.environ.get(
 emotion_recognizer = EmotionRecognizer(CONFIG)
 
 
-@celery.task(name="create_task", bind=True)
+@celery.task(name="create_task", bind=True, base=AbortableTask)
 def create_task(self, video_path: str):
     self.update_state(state=STARTED)
     video_path, df_path = emotion_recognizer.recognize(video_path)
