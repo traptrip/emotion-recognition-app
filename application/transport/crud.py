@@ -53,7 +53,7 @@ def _update_task(db: Session, db_task: models.Task, celery_task: AbortableAsyncR
     db_task.status = celery_task.state
     if celery_task.state == "SUCCESS":
         db_task.result_video_url = celery_task.result[0]
-        db_task.result_table_url = celery_task.result[1]
+        db_task.result_meta_url = celery_task.result[1]
     db.commit()
     return db_task
 
@@ -113,8 +113,8 @@ def delete_user_task(db: Session, user_id: int, task_id: int):
 
         if task.result_video_url:
             os.remove(task.result_video_url)
-        if task.result_table_url:
-            os.remove(task.result_table_url)
+        if task.result_meta_url:
+            os.remove(task.result_meta_url)
         db.delete(task)
         db.commit()
         return {"status": "OK"}

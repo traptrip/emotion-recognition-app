@@ -13,7 +13,7 @@ class Task(TaskBase):
     video_path: str
     status: Optional[str]
     result_video_url: Optional[str]
-    result_table_url: Optional[str]
+    result_meta_url: Optional[str]
 
     class Config:
         orm_mode = True

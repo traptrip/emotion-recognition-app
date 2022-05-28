@@ -188,7 +188,7 @@ def read_task(
     """Get Task table results"""
 
     task = crud.get_user_task(db, current_user.id, task_id)
-    table_path = task.result_table_url
+    table_path = task.result_meta_url
     if os.path.exists(table_path):
         return FileResponse(table_path)
     raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found!")

@@ -22,7 +22,7 @@ class Task(Base):
     video_path = Column(String, index=True)
     status = Column(String, index=True)
     result_video_url = Column(String, index=True)
-    result_table_url = Column(String, index=True)
+    result_meta_url = Column(String, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="tasks")
