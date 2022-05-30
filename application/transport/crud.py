@@ -50,8 +50,13 @@ def authenticate_user(db: Session, username: str, password: str):
 
 # TASK
 def _update_task(db: Session, db_task: models.Task, celery_task: AbortableAsyncResult):
-    db_task.status = celery_task.state
-    if celery_task.state == "SUCCESS":
+    task_status = (
+        celery_task.status
+        if db_task.status not in ("SUCCESS", "FAILURE")
+        else db_task.status
+    )
+    db_task.status = task_status
+    if task_status == "SUCCESS":
         db_task.result_video_url = celery_task.result[0]
         db_task.result_meta_url = celery_task.result[1]
     db.commit()

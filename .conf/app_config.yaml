@@ -6,12 +6,12 @@ general:
 recognition:
   sub_duration: 1000
   image_classifier:
-    weights: ./models/emotion_image_classifier/best.torchscript.pt
-    image_size: [64, 64]
+    weights: ./models/emotion_image_classifier/best_full_128.torchscript.pt
+    image_size: [128, 128]
     device: cuda
 
   audio_classifier:
-    weights: ./models/emotion_audio_classifier/best.torchscript.pt
+    weights: ./models/emotion_audio_classifier/best_fulldata_100ep.torchscript.pt
     device: cuda
     mel_params:
       sample_rate: 16000
