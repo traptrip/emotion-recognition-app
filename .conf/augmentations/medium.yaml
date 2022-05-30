@@ -10,7 +10,7 @@ train:
         rotate_limit: 15
     - class_name: albumentations.CoarseDropout
       params:
-        p: 0.5
+        p: 0.7
     - class_name: albumentations.Resize
       params:
         height: ${general.image_height}
