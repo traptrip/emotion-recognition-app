@@ -1,5 +1,5 @@
 """Create, Read, Update, Delete"""
-import logging
+
 from datetime import datetime
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -114,6 +114,8 @@ def delete_user_task(db: Session, user_id: int, task_id: int):
     if task.owner_id == user_id:
         celery_task = AbortableAsyncResult(task_id)
         while not celery_task.is_aborted():
+            if celery_task.status in ("SUCCESS", "FAILURE"):
+                break
             celery_task.abort()
 
         if task.result_video_url:

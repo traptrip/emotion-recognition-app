@@ -91,24 +91,6 @@ def create_user(
     return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
 
-# @app.get("/users/", response_model=List[schemas.User])
-# def read_users(
-#     skip: int = 0,
-#     limit: int = 100,
-#     db: Session = Depends(get_db),
-#     current_user=Depends(manager),
-# ):
-#     """Get metadata for all users"""
-
-#     if current_user:
-#         users = crud.get_users(db, skip=skip, limit=limit)
-#         return users
-#     raise HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Unauthorised!",
-#     )
-
-
 @app.post("/tasks/add")
 async def create_task_for_user(
     file: UploadFile = File(),
@@ -208,7 +190,6 @@ async def logout():
     """Logout from current session"""
 
     response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    # response.delete_cookie(key="access_token")\
     manager.set_cookie(response, "")
     return response
 
