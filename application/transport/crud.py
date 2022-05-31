@@ -56,7 +56,7 @@ def _update_task(db: Session, db_task: models.Task, celery_task: AbortableAsyncR
         else db_task.status
     )
     db_task.status = task_status
-    if task_status == "SUCCESS":
+    if task_status == "SUCCESS" and not db_task.result_video_url:
         db_task.result_video_url = celery_task.result[0]
         db_task.result_meta_url = celery_task.result[1]
     db.commit()
