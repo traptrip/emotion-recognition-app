@@ -4,7 +4,7 @@ services:
   web:
     build: 
       context: ./application
-      dockerfile: Dockerfile.gpu
+      dockerfile: Dockerfile
     runtime: nvidia
     ports:
       - 8004:8000
