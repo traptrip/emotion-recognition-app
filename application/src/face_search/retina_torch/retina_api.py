@@ -30,7 +30,7 @@ class RetinaDetector:
         self.model = RetinaFace(cfg=self.model_config, phase="test")
         self.detector = self.load_model(self.model)
         self.detector.eval()
-        self.log.info("Finished loading model!")
+        # self.log.info("Finished loading model!")
 
         cudnn.benchmark = True
         self.device = torch.device("cuda" if self.config["gpu"] else "cpu")
@@ -44,20 +44,20 @@ class RetinaDetector:
         used_pretrained_keys = model_keys & ckpt_keys
         unused_pretrained_keys = ckpt_keys - model_keys
         missing_keys = model_keys - ckpt_keys
-        self.log.info(f"Missing keys:{len(missing_keys)}")
-        self.log.info(f"Unused checkpoint keys:{len(unused_pretrained_keys)}")
-        self.log.info("Used keys:{}".format(len(used_pretrained_keys)))
+        # self.log.info(f"Missing keys:{len(missing_keys)}")
+        # self.log.info(f"Unused checkpoint keys:{len(unused_pretrained_keys)}")
+        # self.log.info("Used keys:{}".format(len(used_pretrained_keys)))
         assert len(used_pretrained_keys) > 0, "load NONE from pretrained checkpoint"
         return True
 
     def remove_prefix(self, state_dict, prefix):
         """Old style model is stored with all names of parameters sharing common prefix 'module.'"""
-        self.log.info(f"remove prefix '{prefix}'")
+        # self.log.info(f"remove prefix '{prefix}'")
         f = lambda x: x.split(prefix, 1)[-1] if x.startswith(prefix) else x
         return {f(key): value for key, value in state_dict.items()}
 
     def load_model(self, model):
-        self.log.info(f"Loading pretrained model from {self.model_path}")
+        # self.log.info(f"Loading pretrained model from {self.model_path}")
         if not self.config["gpu"]:
             pretrained_dict = torch.load(
                 self.model_path, map_location=lambda storage, loc: storage
@@ -150,10 +150,12 @@ class RetinaDetector:
         coordinate_faces = list(
             map(lambda x: [int(x[0]), int(x[1]), int(x[2]), int(x[3])], dets)
         )
-        # faces = [image[dets[1]:dets[3], dets[0]:dets[2]] for dets[0], dets[1], dets[2], dets[3] in dets]
-        align_faces = [
-            face_align.norm_crop(img, landmark)
-            for landmark in np.reshape(landmarks, (landmarks.shape[0], 5, 2))
+        faces = [
+            img[int(y1) : int(y2), int(x1) : int(x2)] for x1, y1, x2, y2, _ in dets
         ]
+        # faces = [
+        #     face_align.norm_crop(img, landmark)
+        #     for landmark in np.reshape(landmarks, (landmarks.shape[0], 5, 2))
+        # ]
         # self.log.info(f"Retina detect {len(align_faces)} faces")
-        return coordinate_faces, align_faces
+        return coordinate_faces, faces

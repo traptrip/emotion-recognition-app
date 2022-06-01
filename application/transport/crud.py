@@ -118,9 +118,9 @@ def delete_user_task(db: Session, user_id: int, task_id: int):
                 break
             celery_task.abort()
 
-        if task.result_video_url:
+        if task.result_video_url and os.path.exists(task.result_video_url):
             os.remove(task.result_video_url)
-        if task.result_meta_url:
+        if task.result_meta_url and os.path.exists(task.result_meta_url):
             os.remove(task.result_meta_url)
         db.delete(task)
         db.commit()

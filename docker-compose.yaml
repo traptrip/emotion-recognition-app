@@ -4,11 +4,12 @@ services:
   web:
     build: 
       context: ./application
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.gpu
     runtime: nvidia
+    restart: always
     ports:
-      - 8004:8000
-    command: uvicorn transport.main:app --host 0.0.0.0 --reload
+      - 8004:8000    
+    command: bash -c "uvicorn transport.main:app --host 0.0.0.0 --reload & celery --app=transport.worker.celery worker -P solo --loglevel=info --logfile=logs/celery.log"
     volumes:
       - ./application/transport:/usr/src/app/transport
       - ./application/templates:/usr/src/app/templates
@@ -17,6 +18,7 @@ services:
       - ./application/db:/usr/src/app/db
       - ./.conf/app_config.yaml:/usr/src/app/.conf/app_config.yaml
       - ./media:/usr/src/app/media
+      - ./logs/app_logs:/usr/src/app/logs
     environment:
       - ML_CONFIG_PATH=.conf/app_config.yaml
       - SQLALCHEMY_DATABASE_URL=sqlite:///db/emotion_app.db
@@ -25,26 +27,6 @@ services:
     depends_on:
       - redis
 
-  worker:
-    build: 
-      context: ./application
-      dockerfile: Dockerfile.gpu
-    runtime: nvidia
-    command: celery --app=transport.worker.celery worker -P solo --loglevel=info --logfile=logs/celery.log
-    volumes:
-      - ./application/transport:/usr/src/app/transport
-      - ./application/models:/usr/src/app/models
-      - ./application/db:/usr/src/app/db
-      - ./.conf/app_config.yaml:/usr/src/app/.conf/app_config.yaml
-      - ./logs/app_logs:/usr/src/app/logs
-      - ./media:/usr/src/app/media
-    environment:
-      - ML_CONFIG_PATH=.conf/app_config.yaml
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - web
-      - redis
-
   redis:
+    restart: always
     image: redis:6-alpine

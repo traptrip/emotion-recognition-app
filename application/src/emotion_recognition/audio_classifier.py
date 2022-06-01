@@ -13,6 +13,7 @@ class AudioClassifier:
         self.cfg = cfg
         self._mel_creator = MelCreator(cfg.mel_params, cfg.amp2db_params)
         self._audio_size = cfg.audio_size
+        self._clip_size = int(cfg.audio_size / cfg.mel_params.sample_rate)
         self._model = torch.jit.load(cfg.weights, map_location=torch.device(cfg.device))
         self._model.eval()
 
@@ -39,5 +40,24 @@ class AudioClassifier:
         with torch.no_grad():
             melspec = self._prepare(audio)
             prediction = self._model(melspec)
+            probas = F.softmax(prediction, dim=1)
+        return probas
+
+    def predict_chunks(self, audio: AudioClip) -> torch.Tensor:
+        full_clip_size = audio.duration
+        input_data = torch.stack(
+            [
+                self._prepare(
+                    audio.subclip(i, min(i + self._clip_size, int(full_clip_size)))
+                )[0]
+                for i in range(0, int(full_clip_size), self._clip_size)
+            ] + [
+                self._prepare(audio.subclip(-(full_clip_size % self._clip_size)))[0]
+            ] if full_clip_size % self._clip_size else []
+        )
+        
+        with torch.no_grad():
+            batch = input_data.to(self.cfg.device)
+            prediction = self._model(batch)
             probas = F.softmax(prediction, dim=1)
         return probas
