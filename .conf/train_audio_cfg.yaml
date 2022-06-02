@@ -14,7 +14,7 @@ defaults:
 general:
   seed: 42
   device: cuda
-  n_epochs: 60
+  n_epochs: 100
   batch_size: 512
   n_workers: 4
   audio_len: 64000 # 4 sec
