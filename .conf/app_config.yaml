@@ -4,7 +4,7 @@ general:
   sample_rate: 16000
 
 recognition:
-  sub_duration: 1000
+  sub_duration: 1000 # frames on schedule
   image_classifier:
     weights: ./models/emotion_image_classifier/best_full_128.torchscript.pt
     image_size: [128, 128]
