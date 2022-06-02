@@ -7,7 +7,7 @@ from training.trainers.base_trainer import Trainer
 class VisionTrainer(Trainer):
     def _initialize_model(self) -> Any:
         model_cfg = self.cfg.model
-        model = load_obj(model_cfg._target_)(model_cfg.params)
+        model = load_obj(model_cfg._target_)(**model_cfg.params)
         if model_cfg.freeze:
             for mp in model.parameters():
                 mp.requires_grad = False
@@ -19,4 +19,11 @@ class VisionTrainer(Trainer):
                 model.classifier[-1].in_features, model_cfg.n_classes
             )
             return model
+        elif "torch.hub.load" in model_cfg._target_:
+            if "efficientnet" in model_cfg.params.model.lower():
+                model.classifier.fc = nn.Linear(
+                    model.classifier.fc.in_features, model_cfg.n_classes
+                )
+            return model
+
         raise ValueError("No such model!")

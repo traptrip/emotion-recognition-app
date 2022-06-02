@@ -1,5 +1,5 @@
 _target_: torchvision.models.mobilenet_v3_large
 freeze: false
-n_classes: 8
+n_classes: 7
 params:
   pretrained: true

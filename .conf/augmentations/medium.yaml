@@ -10,6 +10,10 @@ train:
         rotate_limit: 15
     - class_name: albumentations.CoarseDropout
       params:
+        max_holes: 8
+        max_height: 8
+        max_width: 8
+        fill_value: 0
         p: 0.7
     - class_name: albumentations.Resize
       params:

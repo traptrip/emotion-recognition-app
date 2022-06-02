@@ -1,0 +1,7 @@
+_target_: torch.hub.load
+n_classes: 7
+freeze: false
+params:
+  repo_or_dir: NVIDIA/DeepLearningExamples:torchhub
+  model: nvidia_efficientnet_b0
+  pretrained: true
