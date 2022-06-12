@@ -1,3 +1,4 @@
+import math
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -16,6 +17,8 @@ class AudioClassifier:
         self._clip_size = int(cfg.audio_size / cfg.mel_params.sample_rate)
         self._model = torch.jit.load(cfg.weights, map_location=torch.device(cfg.device))
         self._model.eval()
+        self.chunk_size = 128
+        self.n_classes = 7
 
     def _prepare(self, audio_clip: AudioClip) -> T.MelSpectrogram:
         audio = torch.from_numpy(audio_clip.to_soundarray().T)
@@ -51,13 +54,20 @@ class AudioClassifier:
                     audio.subclip(i, min(i + self._clip_size, int(full_clip_size)))
                 )[0]
                 for i in range(0, int(full_clip_size), self._clip_size)
-            ] + [
-                self._prepare(audio.subclip(-(full_clip_size % self._clip_size)))[0]
-            ] if full_clip_size % self._clip_size else []
+            ]
+            + [self._prepare(audio.subclip(-(full_clip_size % self._clip_size)))[0]]
+            if full_clip_size % self._clip_size
+            else []
         )
-        
+        input_data = input_data.to(self.cfg.device)
+
+        data_len = len(input_data)
+        n_chunks = math.ceil(data_len / self.chunk_size)
+        all_probas = torch.zeros((data_len, self.n_classes))
         with torch.no_grad():
-            batch = input_data.to(self.cfg.device)
-            prediction = self._model(batch)
-            probas = F.softmax(prediction, dim=1)
-        return probas
+            for i in range(n_chunks):
+                batch = input_data[i * self.chunk_size : (i + 1) * self.chunk_size]
+                prediction = self._model(batch)
+                probas = F.softmax(prediction, dim=1)
+                all_probas[i * self.chunk_size : (i + 1) * self.chunk_size] = probas
+        return all_probas

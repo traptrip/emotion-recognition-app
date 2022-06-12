@@ -49,7 +49,7 @@ class EmotionRecognizer:
         video_clip = VideoFileClip(
             str(video_path), audio_fps=self.cfg.general.sample_rate
         )
-        # video_clip = video_clip.resize((640, 640))
+        video_clip = video_clip.resize((640, 640))
 
         with time_manager("Recognition"):
             recognition_result = self._recognize_clip(video_clip)

@@ -134,7 +134,7 @@ def read_task(
 
 
 @app.get("/tasks/{task_id}/video")
-def read_task(
+def read_task_video(
     task_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(manager),
@@ -149,7 +149,7 @@ def read_task(
 
 
 @app.get("/tasks/{task_id}/meta")
-def read_task(
+def read_task_meta(
     task_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(manager),
